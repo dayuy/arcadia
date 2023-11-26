@@ -13,22 +13,22 @@ query listKnowledgeBases($input: ListKnowledgeBaseInput!){
           creator
           displayName
           description
+          status
+          updateTimestamp
           embedder {
             kind
             Name
           }
-          vectorstore{
+          vectorStore{
             kind
             Name
           }
           fileGroups {
-            ... on filegroup{
-                source {
-                    kind
-                    Name
-                }
-                path
+            source {
+                kind
+                Name
             }
+            path
           }
         }
       }
@@ -47,22 +47,22 @@ query getKnowledgeBase($name: String!, $namespace: String!) {
           creator
           displayName
           description
+          status
+          updateTimestamp
           embedder {
             kind
             Name
           }
-          vectorstore{
+          vectorStore{
             kind
             Name
           }
           fileGroups {
-            ... on filegroup{
-                source {
-                    kind
-                    Name
-                }
-                path
+            source {
+                kind
+                Name
             }
+            path
           }
     }
   }
@@ -79,22 +79,22 @@ mutation createKnowledgeBase($input: CreateKnowledgeBaseInput!) {
           creator
           displayName
           description
+          status
+          updateTimestamp
           embedder {
             kind
             Name
           }
-          vectorstore{
+          vectorStore{
             kind
             Name
           }
           fileGroups {
-            ... on filegroup{
-                source {
-                    kind
-                    Name
-                }
-                path
+            source {
+                kind
+                Name
             }
+            path
           }
     }
   }
@@ -111,22 +111,22 @@ mutation updateKnowledgeBase($input: UpdateKnowledgeBaseInput) {
           creator
           displayName
           description
+          status
+          updateTimestamp
           embedder {
             kind
             Name
           }
-          vectorstore{
+          vectorStore{
             kind
             Name
           }
           fileGroups {
-            ... on filegroup{
-                source {
-                    kind
-                    Name
-                }
-                path
+            source {
+                kind
+                Name
             }
+            path
           }
     }
   }

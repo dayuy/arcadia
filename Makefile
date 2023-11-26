@@ -254,6 +254,10 @@ gql-gen:
 build-graphql-server: gql-gen
 	@CGO_ENABLED=0 GOOS=linux go build -o bin/graphql-server graphql-server/go-server/main.go
 
+# sdk for graphql-server api
+gql-sdk-upgrade:
+	docker run -v $(shell pwd)/graphql-server/go-server/graph/schema:/schema 172.22.96.34/dev-branch/arcadia-bff-sdk:main
+
 
 # prepare for git push
 .PHONY: prepare-push
