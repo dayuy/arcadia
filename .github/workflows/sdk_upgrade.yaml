@@ -1,0 +1,24 @@
+name: Publish @tenx-ui/arcadia-bff-sdk
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  installation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x',
+          registry-url: 'http://dev-npm.tenxcloud.net'
+          always-auth: 'true'
+          scope: '@tenx-ui'
+      - run: npm i pnpm @antfu/ni zx -g
+      - run: ni
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm run gen:gql
+      - run: npm run pub
