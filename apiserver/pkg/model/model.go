@@ -229,40 +229,24 @@ func ListModels(ctx context.Context, c dynamic.Interface, input generated.ListMo
 		models.Items = append(systemModels.Items, models.Items...)
 	}
 
-	totalCount := len(models.Items)
-
-	result := make([]generated.PageNode, 0, pageSize)
-	pageStart := (page - 1) * pageSize
-	for index, u := range models.Items {
-		// skip if smaller than the start index
-		if index < pageStart {
-			continue
-		}
-
+	result := make([]generated.PageNode, 0, len(models.Items))
+	for _, u := range models.Items {
 		m := obj2model(&u)
 		// filter based on `keyword`
-		if keyword != "" {
-			if !strings.Contains(m.Name, keyword) && !strings.Contains(*m.DisplayName, keyword) {
-				continue
-			}
-		}
-		result = append(result, m)
-
-		// break if page size matches
-		if len(result) == pageSize {
-			break
+		if keyword == "" || strings.Contains(m.Name, keyword) || strings.Contains(*m.DisplayName, keyword) {
+			result = append(result, m)
 		}
 	}
-
+	totalCount := len(result)
+	pageStart := (page - 1) * pageSize
 	end := page * pageSize
 	if end > totalCount {
 		end = totalCount
 	}
-
 	return &generated.PaginatedResult{
 		TotalCount:  totalCount,
 		HasNextPage: end < totalCount,
-		Nodes:       result,
+		Nodes:       result[pageStart:end],
 	}, nil
 }
 
