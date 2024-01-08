@@ -309,6 +309,12 @@ func ListApplicationMeatadatas(ctx context.Context, c dynamic.Interface, input g
 	}
 	totalCount := len(filtered)
 
+	if page < 0 {
+		page = 1
+	}
+	if pageSize < 0 {
+		pageSize = 10
+	}
 	end := page * pageSize
 	if end > totalCount {
 		end = totalCount

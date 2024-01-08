@@ -302,25 +302,21 @@ func ListDatasources(ctx context.Context, c dynamic.Interface, input generated.L
 		return datasList.Items[i].GetCreationTimestamp().After(datasList.Items[j].GetCreationTimestamp().Time)
 	})
 
-	totalCount := len(datasList.Items)
-
-	result := make([]generated.PageNode, 0, pageSize)
+	result := make([]generated.PageNode, 0, len(datasList.Items))
 	for _, u := range datasList.Items {
 		m := datasource2model(&u)
 		// filter based on `keyword`
-		if keyword != "" {
-			if !strings.Contains(m.Name, keyword) && !strings.Contains(*m.DisplayName, keyword) {
-				continue
-			}
+		if keyword != "" && !strings.Contains(m.Name, keyword) && !strings.Contains(*m.DisplayName, keyword) {
+			continue
 		}
 		result = append(result, m)
-
-		// break if page size matches
-		if len(result) == pageSize {
-			break
-		}
 	}
+	totalCount := len(result)
 
+	start := (page - 1) * pageSize
+	if start > totalCount {
+		start = totalCount
+	}
 	end := page * pageSize
 	if end > totalCount {
 		end = totalCount
@@ -329,7 +325,7 @@ func ListDatasources(ctx context.Context, c dynamic.Interface, input generated.L
 	return &generated.PaginatedResult{
 		TotalCount:  totalCount,
 		HasNextPage: end < totalCount,
-		Nodes:       result,
+		Nodes:       result[start:end],
 	}, nil
 }
 

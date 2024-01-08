@@ -134,39 +134,25 @@ func ListLLMs(ctx context.Context, c dynamic.Interface, input generated.ListComm
 		return us.Items[i].GetCreationTimestamp().After(us.Items[j].GetCreationTimestamp().Time)
 	})
 
-	totalCount := len(us.Items)
-
+	result := make([]generated.PageNode, 0, len(us.Items))
+	for _, u := range us.Items {
+		m := LLM2model(ctx, c, &u)
+		if keyword != "" && !strings.Contains(m.Name, keyword) && !strings.Contains(*m.DisplayName, keyword) {
+			continue
+		}
+		result = append(result, opts.ConvertFunc(m))
+	}
+	totalCount := len(result)
 	// if pageSize is -1 which means unlimited pagesize,return all
 	if pageSize == common.UnlimitedPageSize {
 		page = 1
 		pageSize = totalCount
 	}
 
-	result := make([]generated.PageNode, 0, pageSize)
 	pageStart := (page - 1) * pageSize
-
-	for index, u := range us.Items {
-		// skip if smaller than the start index
-		if index < pageStart {
-			continue
-		}
-		m := LLM2model(ctx, c, &u)
-		// filter based on `keyword`
-		if keyword != "" {
-			if !strings.Contains(m.Name, keyword) && !strings.Contains(*m.DisplayName, keyword) {
-				continue
-			}
-		}
-
-		// convertFunc
-		result = append(result, opts.ConvertFunc(m))
-
-		// break if page size matches
-		if len(result) == pageSize {
-			break
-		}
+	if pageStart > totalCount {
+		pageStart = totalCount
 	}
-
 	end := page * pageSize
 	if end > totalCount {
 		end = totalCount
@@ -175,7 +161,7 @@ func ListLLMs(ctx context.Context, c dynamic.Interface, input generated.ListComm
 	return &generated.PaginatedResult{
 		TotalCount:  totalCount,
 		HasNextPage: end < totalCount,
-		Nodes:       result,
+		Nodes:       result[pageStart:end],
 	}, nil
 }
 
