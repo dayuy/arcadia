@@ -21,17 +21,17 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
-	"io"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"github.com/spf13/cobra"
+	"io"
+	"io/fs"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
 
 	basev1alpha1 "github.com/kubeagi/arcadia/api/base/v1alpha1"
 	evalv1alpha1 "github.com/kubeagi/arcadia/api/evaluation/v1alpha1"
@@ -142,19 +142,20 @@ func EvalGenTestDataset(home *string, namespace *string, appName *string) *cobra
 			}
 
 			// read files from input directory
-			files, err := os.ReadDir(inputDir)
-			if err != nil {
-				log.Fatal(err)
-			}
-			for _, file := range files {
-				if file.IsDir() || filepath.Ext(file.Name()) != ".csv" || strings.HasPrefix(file.Name(), "ragas-") {
-					continue
+			filepath.WalkDir(inputDir, func(path string, d fs.DirEntry, err error) error {
+				if err != nil {
+					log.Fatal(err)
+					return err
+				}
+				if d.IsDir() || filepath.Ext(d.Name()) != ".csv" || strings.HasPrefix(d.Name(), "ragas-") {
+					return nil
 				}
 				var output evaluation.Output
 				switch outputMethod {
 				case "csv":
-					outputCSVFile, err := os.Create(filepath.Join(inputDir, fmt.Sprintf("ragas-%s", file.Name())))
+					outputCSVFile, err := os.Create(strings.Replace(path, d.Name(), fmt.Sprintf("ragas-%s", d.Name()), 1))
 					if err != nil {
+						log.Fatal(err)
 						return err
 					}
 					defer outputCSVFile.Close()
@@ -168,15 +169,17 @@ func EvalGenTestDataset(home *string, namespace *string, appName *string) *cobra
 				}
 				// read file from dataset
 				err = GenDatasetOnSingleFile(ctx, kubeClient, app,
-					filepath.Join(inputDir, file.Name()),
+					path,
 					evaluation.WithQuestionColumn(questionColumn),
 					evaluation.WithGroundTruthsColumn(groundTruthsColumn),
 					evaluation.WithOutput(output),
 				)
 				if err != nil {
+					log.Fatal(err)
 					return err
 				}
-			}
+				return nil
+			})
 
 			return nil
 		},
